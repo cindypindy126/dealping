@@ -5,6 +5,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../data/models/models.dart';
 import '../../data/services/mock_data_service.dart';
+import '../providers/app_providers.dart';
 
 class SearchScreen extends ConsumerStatefulWidget {
   const SearchScreen({super.key});
@@ -18,18 +19,36 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   String _query = '';
 
   @override
+  void initState() {
+    super.initState();
+    Future.microtask(() =>
+        ref.read(searchCountProvider.notifier).load());
+  }
+
+  @override
   void dispose() {
     _controller.dispose();
     super.dispose();
   }
 
+  List<Merchant> _sortedByCount(List<Merchant> list) {
+    final counts = ref.read(searchCountProvider);
+    final sorted = [...list];
+    sorted.sort((a, b) =>
+        (counts[b.id] ?? 0).compareTo(counts[a.id] ?? 0));
+    return sorted;
+  }
+
   List<Merchant> get _results {
-    if (_query.trim().isEmpty) return MockDataService.merchants;
+    if (_query.trim().isEmpty) {
+      return _sortedByCount(MockDataService.merchants);
+    }
     final lower = _query.toLowerCase();
-    return MockDataService.merchants.where((m) {
+    final filtered = MockDataService.merchants.where((m) {
       if (m.name.toLowerCase().contains(lower)) return true;
       return m.aliases.any((a) => a.toLowerCase().contains(lower));
     }).toList();
+    return _sortedByCount(filtered);
   }
 
   String _categoryName(String categoryId) {
@@ -120,6 +139,9 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                     ),
                   ),
                   onTap: () {
+                    ref
+                        .read(searchCountProvider.notifier)
+                        .increment(merchant.id);
                     context.push(
                       '/category/${merchant.categoryId}',
                       extra: merchant,

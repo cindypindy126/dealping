@@ -27,23 +27,61 @@ class CategoryDetailScreen extends ConsumerStatefulWidget {
 class _CategoryDetailScreenState extends ConsumerState<CategoryDetailScreen> {
   Merchant? _selectedMerchant;
   String _merchantQuery = '';
+  bool _searchFocused = false;
+  final _searchFocus = FocusNode();
+  final _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     _selectedMerchant = widget.initialMerchant;
+    _searchFocus.addListener(() {
+      setState(() => _searchFocused = _searchFocus.hasFocus);
+    });
+    Future.microtask(() =>
+        ref.read(searchCountProvider.notifier).load());
   }
 
-  List<Merchant> get _filteredMerchants {
-    final all =
-        MockDataService.getMerchantsForCategory(widget.categoryId);
-    if (_merchantQuery.isEmpty) return all;
-    final lower = _merchantQuery.toLowerCase();
-    return all
-        .where((m) =>
-            m.name.toLowerCase().contains(lower) ||
-            m.aliases.any((a) => a.toLowerCase().contains(lower)))
-        .toList();
+  @override
+  void dispose() {
+    _searchFocus.dispose();
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  List<Merchant> get _sortedMerchants {
+    final all = MockDataService.getMerchantsForCategory(widget.categoryId);
+    final counts = ref.read(searchCountProvider);
+
+    List<Merchant> filtered;
+    if (_merchantQuery.isEmpty) {
+      filtered = all;
+    } else {
+      final lower = _merchantQuery.toLowerCase();
+      filtered = all
+          .where((m) =>
+              m.name.toLowerCase().contains(lower) ||
+              m.aliases.any((a) => a.toLowerCase().contains(lower)))
+          .toList();
+    }
+
+    filtered.sort((a, b) {
+      final countDiff =
+          (counts[b.id] ?? 0).compareTo(counts[a.id] ?? 0);
+      if (countDiff != 0) return countDiff;
+      return a.name.compareTo(b.name);
+    });
+    return filtered;
+  }
+
+  void _selectMerchant(Merchant m) {
+    ref.read(searchCountProvider.notifier).increment(m.id);
+    setState(() {
+      _selectedMerchant = _selectedMerchant?.id == m.id ? null : m;
+      _merchantQuery = '';
+      _searchController.clear();
+    });
+    _searchFocus.unfocus();
   }
 
   @override
@@ -74,10 +112,22 @@ class _CategoryDetailScreenState extends ConsumerState<CategoryDetailScreen> {
           children: [
             // Merchant search
             TextField(
+              controller: _searchController,
+              focusNode: _searchFocus,
               decoration: InputDecoration(
                 hintText: '가맹점 검색',
                 prefixIcon:
                     const Icon(Icons.search, color: AppColors.textSecondary),
+                suffixIcon: _merchantQuery.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear,
+                            color: AppColors.textSecondary),
+                        onPressed: () {
+                          _searchController.clear();
+                          setState(() => _merchantQuery = '');
+                        },
+                      )
+                    : null,
                 filled: true,
                 fillColor: AppColors.surface,
                 border: OutlineInputBorder(
@@ -97,30 +147,63 @@ class _CategoryDetailScreenState extends ConsumerState<CategoryDetailScreen> {
               onChanged: (v) => setState(() => _merchantQuery = v),
             ),
 
-            // Merchant chips
-            if (_merchantQuery.isNotEmpty) ...[
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                children: _filteredMerchants.map((m) {
-                  final selected = _selectedMerchant?.id == m.id;
-                  return ChoiceChip(
-                    label: Text(m.name),
-                    selected: selected,
-                    selectedColor: AppColors.primary.withAlpha(40),
-                    onSelected: (_) {
-                      setState(() {
-                        _selectedMerchant = selected ? null : m;
-                        _merchantQuery = '';
-                      });
-                    },
-                  );
-                }).toList(),
+            // Merchant list (포커스 중이거나 검색어 있을 때)
+            if (_searchFocused || _merchantQuery.isNotEmpty) ...[
+              const SizedBox(height: 4),
+              Container(
+                constraints: const BoxConstraints(maxHeight: 240),
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: AppColors.border),
+                ),
+                child: _sortedMerchants.isEmpty
+                    ? Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Text('검색 결과 없음',
+                            style: AppTextStyles.bodySmall
+                                .copyWith(color: AppColors.textSecondary)),
+                      )
+                    : ListView.separated(
+                        shrinkWrap: true,
+                        padding: EdgeInsets.zero,
+                        itemCount: _sortedMerchants.length,
+                        separatorBuilder: (_, __) =>
+                            const Divider(height: 1, indent: 16, endIndent: 16),
+                        itemBuilder: (_, i) {
+                          final m = _sortedMerchants[i];
+                          final selected = _selectedMerchant?.id == m.id;
+                          return ListTile(
+                            dense: true,
+                            leading: Icon(
+                              Icons.store_outlined,
+                              color: selected
+                                  ? AppColors.primary
+                                  : AppColors.textSecondary,
+                              size: 20,
+                            ),
+                            title: Text(m.name,
+                                style: AppTextStyles.bodyMedium.copyWith(
+                                  color: selected
+                                      ? AppColors.primary
+                                      : AppColors.textPrimary,
+                                  fontWeight: selected
+                                      ? FontWeight.w600
+                                      : FontWeight.normal,
+                                )),
+                            trailing: selected
+                                ? const Icon(Icons.check,
+                                    color: AppColors.primary, size: 18)
+                                : null,
+                            onTap: () => _selectMerchant(m),
+                          );
+                        },
+                      ),
               ),
             ],
 
             // Selected merchant chip
-            if (_selectedMerchant != null) ...[
+            if (_selectedMerchant != null && !_searchFocused) ...[
               const SizedBox(height: 12),
               Row(
                 children: [

@@ -24,6 +24,11 @@ const _slides = [
     subtitle: '내 카드 중 가장 혜택이 좋은 카드를 알려드려요',
   ),
   _Slide(
+    icon: Icons.credit_card_off_outlined,
+    title: '카드 정보 입력 NO!',
+    subtitle: '이름만 검색해서 내 카드로 등록하세요',
+  ),
+  _Slide(
     icon: Icons.auto_awesome,
     title: '지금 바로 시작하세요',
     subtitle: '카드를 등록하고 혜택을 확인해보세요',

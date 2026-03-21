@@ -9,15 +9,17 @@ class MockDataService {
 
   static final List<Category> categories = [
     const Category(
-        id: 'cat_cafe', name: '카페', icon: 'coffee', sortOrder: 0),
+        id: 'cat_cafe_food', name: '카페/푸드', icon: 'coffee', sortOrder: 0),
     const Category(
-        id: 'cat_convenience', name: '편의점', icon: 'store', sortOrder: 1),
+        id: 'cat_convenience', name: '편의점/마트', icon: 'store', sortOrder: 1),
     const Category(
-        id: 'cat_gas', name: '주유', icon: 'local_gas_station', sortOrder: 2),
+        id: 'cat_online', name: '쇼핑/온라인', icon: 'shopping_cart', sortOrder: 2),
     const Category(
-        id: 'cat_food', name: '음식점', icon: 'restaurant', sortOrder: 3),
+        id: 'cat_subscription', name: '구독/배달', icon: 'delivery_dining', sortOrder: 3),
     const Category(
-        id: 'cat_online', name: '온라인쇼핑', icon: 'shopping_cart', sortOrder: 4),
+        id: 'cat_transport', name: '교통/주유', icon: 'local_gas_station', sortOrder: 4),
+    const Category(
+        id: 'cat_life', name: '생활/기타', icon: 'apps', sortOrder: 5),
   ];
 
   // ─── Merchants ────────────────────────────────────────────────────────────
@@ -26,14 +28,14 @@ class MockDataService {
     const Merchant(
         id: 'mer_starbucks',
         name: '스타벅스',
-        categoryId: 'cat_cafe',
+        categoryId: 'cat_cafe_food',
         aliases: ['스벅', 'STARBUCKS'],
         isFranchise: true,
         sortOrder: 0),
     const Merchant(
         id: 'mer_ediya',
         name: '이디야커피',
-        categoryId: 'cat_cafe',
+        categoryId: 'cat_cafe_food',
         aliases: ['이디야', 'EDIYA'],
         isFranchise: true,
         sortOrder: 1),
@@ -54,21 +56,21 @@ class MockDataService {
     const Merchant(
         id: 'mer_sk_energy',
         name: 'SK에너지',
-        categoryId: 'cat_gas',
+        categoryId: 'cat_transport',
         aliases: ['SK주유소', 'SK에너지주유소'],
         isFranchise: true,
         sortOrder: 0),
     const Merchant(
         id: 'mer_gs_caltex',
         name: 'GS칼텍스',
-        categoryId: 'cat_gas',
+        categoryId: 'cat_transport',
         aliases: ['GS주유소'],
         isFranchise: true,
         sortOrder: 1),
     const Merchant(
         id: 'mer_baemin',
         name: '배달의민족',
-        categoryId: 'cat_food',
+        categoryId: 'cat_cafe_food',
         aliases: ['배민', 'BAEMIN'],
         isFranchise: false,
         sortOrder: 0),
@@ -207,7 +209,7 @@ class MockDataService {
     'prov_shinhan_deepdream': [
       const Benefit(
         id: 'ben_sd_1',
-        categoryId: 'cat_cafe',
+        categoryId: 'cat_cafe_food',
         merchantId: 'mer_starbucks',
         benefitType: 'discount',
         benefitRate: 20,
@@ -217,7 +219,7 @@ class MockDataService {
       ),
       const Benefit(
         id: 'ben_sd_2',
-        categoryId: 'cat_cafe',
+        categoryId: 'cat_cafe_food',
         merchantId: null,
         benefitType: 'discount',
         benefitRate: 10,
@@ -249,7 +251,7 @@ class MockDataService {
       ),
       const Benefit(
         id: 'ben_wu_2',
-        categoryId: 'cat_cafe',
+        categoryId: 'cat_cafe_food',
         merchantId: 'mer_ediya',
         benefitType: 'discount',
         benefitRate: 10,
@@ -259,7 +261,7 @@ class MockDataService {
       ),
       const Benefit(
         id: 'ben_wu_3',
-        categoryId: 'cat_food',
+        categoryId: 'cat_cafe_food',
         merchantId: 'mer_baemin',
         benefitType: 'discount',
         benefitRate: 7,
@@ -281,7 +283,7 @@ class MockDataService {
       ),
       const Benefit(
         id: 'ben_kb_2',
-        categoryId: 'cat_cafe',
+        categoryId: 'cat_cafe_food',
         merchantId: null,
         benefitType: 'discount',
         benefitRate: 5,
@@ -291,7 +293,7 @@ class MockDataService {
       ),
       const Benefit(
         id: 'ben_kb_3',
-        categoryId: 'cat_gas',
+        categoryId: 'cat_transport',
         merchantId: null,
         benefitType: 'discount',
         benefitRate: 3,
@@ -303,7 +305,7 @@ class MockDataService {
     'prov_hyundai_m': [
       const Benefit(
         id: 'ben_hm_1',
-        categoryId: 'cat_gas',
+        categoryId: 'cat_transport',
         merchantId: null,
         benefitType: 'discount',
         benefitRate: 5,
@@ -313,7 +315,7 @@ class MockDataService {
       ),
       const Benefit(
         id: 'ben_hm_2',
-        categoryId: 'cat_gas',
+        categoryId: 'cat_transport',
         merchantId: 'mer_sk_energy',
         benefitType: 'discount',
         benefitRate: 10,
@@ -323,7 +325,7 @@ class MockDataService {
       ),
       const Benefit(
         id: 'ben_hm_3',
-        categoryId: 'cat_food',
+        categoryId: 'cat_cafe_food',
         merchantId: null,
         benefitType: 'point',
         benefitRate: 2,
@@ -335,7 +337,7 @@ class MockDataService {
     'prov_lgu': [
       const Benefit(
         id: 'ben_lgu_1',
-        categoryId: 'cat_cafe',
+        categoryId: 'cat_cafe_food',
         merchantId: null,
         benefitType: 'discount',
         benefitRate: 5,

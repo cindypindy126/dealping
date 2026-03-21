@@ -5,6 +5,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../data/models/models.dart';
 import '../../data/services/mock_data_service.dart';
+import '../../shared/widgets/provider_type_badge.dart';
 import '../providers/app_providers.dart';
 
 class HomeScreen extends ConsumerWidget {
@@ -22,18 +23,13 @@ class HomeScreen extends ConsumerWidget {
         backgroundColor: AppColors.background,
         elevation: 0,
         title: Text(
-          'Dealping',
+          'DealPing',
           style: AppTextStyles.headlineMedium.copyWith(
             color: AppColors.primary,
             fontWeight: FontWeight.w800,
           ),
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.search, color: AppColors.textPrimary),
-            onPressed: () => context.push('/search'),
-          ),
-        ],
+        actions: const [],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -175,12 +171,14 @@ class _CategoryGridItem extends StatelessWidget {
         return Icons.coffee;
       case 'store':
         return Icons.store;
-      case 'local_gas_station':
-        return Icons.local_gas_station;
-      case 'restaurant':
-        return Icons.restaurant;
       case 'shopping_cart':
         return Icons.shopping_cart;
+      case 'delivery_dining':
+        return Icons.delivery_dining;
+      case 'local_gas_station':
+        return Icons.local_gas_station;
+      case 'apps':
+        return Icons.apps;
       default:
         return Icons.category;
     }
@@ -188,9 +186,19 @@ class _CategoryGridItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF6C63FF).withValues(alpha: 0.10),
+            offset: const Offset(0, 3),
+            blurRadius: 7,
+            spreadRadius: 1,
+          ),
+        ],
+      ),
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
         onTap: onTap,
@@ -201,7 +209,7 @@ class _CategoryGridItem extends StatelessWidget {
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: AppColors.primary.withAlpha(20),
-                shape: BoxShape.circle,
+                borderRadius: BorderRadius.circular(16),
               ),
               child: Icon(
                 _iconForCategory(category.icon),
@@ -229,48 +237,70 @@ class _MyProvidersPreview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final providers = providerIds
+    final all = providerIds
         .map(MockDataService.getProvider)
         .whereType<BenefitProvider>()
-        .take(3)
         .toList();
+    final providers = [
+      ...all.where((p) => p.cardType == 'credit'),
+      ...all.where((p) => p.cardType == 'debit'),
+      ...all.where((p) => p.providerType == 'telecom'),
+    ];
 
     return Column(
       children: [
         for (final provider in providers) ...[
-          Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: AppColors.border),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withAlpha(20),
-                    borderRadius: BorderRadius.circular(8),
+          GestureDetector(
+            onTap: () => context.push('/provider/${provider.id}'),
+            child: Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: AppColors.border),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF6C63FF).withValues(alpha: 0.10),
+                    offset: const Offset(0, 3),
+                    blurRadius: 7,
+                    spreadRadius: 1,
                   ),
-                  child: Icon(
-                    provider.providerType == 'telecom'
-                        ? Icons.phone_android
-                        : Icons.credit_card,
-                    color: AppColors.primary,
-                    size: 20,
+                ],
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withAlpha(20),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(
+                      provider.providerType == 'telecom'
+                          ? Icons.phone_android
+                          : Icons.credit_card,
+                      color: AppColors.primary,
+                      size: 20,
+                    ),
                   ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    '${provider.issuerName} ${provider.name}',
-                    style: AppTextStyles.bodyMedium,
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      '${provider.issuerName} ${provider.name}',
+                      style: AppTextStyles.bodyMedium,
+                    ),
                   ),
-                ),
-              ],
+                  ProviderTypeBadge(
+                    providerType: provider.providerType,
+                    cardType: provider.cardType,
+                  ),
+                  const SizedBox(width: 4),
+                  const Icon(Icons.chevron_right,
+                      color: AppColors.textSecondary, size: 20),
+                ],
+              ),
             ),
           ),
           const SizedBox(height: 8),

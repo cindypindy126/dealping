@@ -37,6 +37,36 @@ final myProvidersProvider =
   return MyProvidersNotifier();
 });
 
+// ─── Search count (자주 검색한 순) ────────────────────────────────────────────
+
+class SearchCountNotifier extends StateNotifier<Map<String, int>> {
+  SearchCountNotifier() : super({});
+
+  Future<void> load() async {
+    final prefs = await SharedPreferences.getInstance();
+    final keys = prefs.getKeys().where((k) => k.startsWith('sc_'));
+    final map = <String, int>{};
+    for (final k in keys) {
+      map[k.substring(3)] = prefs.getInt(k) ?? 0;
+    }
+    state = map;
+  }
+
+  Future<void> increment(String merchantId) async {
+    final updated = {...state, merchantId: (state[merchantId] ?? 0) + 1};
+    state = updated;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('sc_$merchantId', updated[merchantId]!);
+  }
+
+  int countOf(String merchantId) => state[merchantId] ?? 0;
+}
+
+final searchCountProvider =
+    StateNotifierProvider<SearchCountNotifier, Map<String, int>>((ref) {
+  return SearchCountNotifier();
+});
+
 // ─── Selected category / merchant ────────────────────────────────────────────
 
 final selectedCategoryProvider = StateProvider<String?>((ref) => null);
