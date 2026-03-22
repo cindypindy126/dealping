@@ -1,0 +1,5 @@
+# 보안 파일
+scripts/service-account.json
+
+# Node
+scripts/node_modules/

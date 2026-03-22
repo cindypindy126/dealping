@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/theme/admin_theme.dart';
@@ -40,29 +40,24 @@ class _LoginScreenState extends State<LoginScreen> {
     final email = _emailController.text.trim();
     final password = _passwordController.text;
 
-    // CRITICAL: These hardcoded credentials are a pre-production security blocker.
-    // Flutter Web compiles to JS; hardcoded secrets are visible in the bundle.
-    // TODO: Replace with Firebase Auth before any production or staging deployment:
-    //   1. Call Firebase.initializeApp() in main.dart
-    //   2. Use FirebaseAuth.instance.signInWithEmailAndPassword(email: email, password: password)
-    //   3. Remove this entire kDebugMode block
-    if (kDebugMode) {
-      if (email == 'admin@dealping.com' && password == 'admin123') {
-        setAuthenticated(true);
-        if (mounted) {
-          context.go('/dashboard');
-        }
-      } else {
-        setState(() {
-          _isLoading = false;
-          _errorMessage = '이메일 또는 비밀번호가 올바르지 않습니다.';
-        });
+    try {
+      await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+      setAuthenticated(true);
+      if (mounted) {
+        context.go('/dashboard');
       }
-    } else {
-      // Release mode: Firebase Auth not yet configured.
+    } on FirebaseAuthException catch (e) {
       setState(() {
         _isLoading = false;
-        _errorMessage = 'Firebase 인증이 구성되지 않았습니다. 관리자에게 문의하세요.';
+        _errorMessage = switch (e.code) {
+          'user-not-found' || 'wrong-password' || 'invalid-credential' =>
+            '이메일 또는 비밀번호가 올바르지 않습니다.',
+          'too-many-requests' => '너무 많은 시도가 있었습니다. 잠시 후 다시 시도해주세요.',
+          _ => '로그인에 실패했습니다. 다시 시도해주세요.',
+        };
       });
     }
   }

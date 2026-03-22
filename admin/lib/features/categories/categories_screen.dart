@@ -17,34 +17,12 @@ class CategoryItem {
 }
 
 final List<CategoryItem> mockCategories = [
-  CategoryItem(id: 'food', name: '식사/카페', iconCode: 'e56c', isActive: true),
-  CategoryItem(id: 'gas', name: '주유', iconCode: 'e549', isActive: true),
-  CategoryItem(
-    id: 'transport',
-    name: '교통',
-    iconCode: 'e531',
-    isActive: true,
-  ),
-  CategoryItem(id: 'shopping', name: '쇼핑', iconCode: 'e59c', isActive: true),
-  CategoryItem(
-    id: 'medical',
-    name: '의료/약국',
-    iconCode: 'e548',
-    isActive: true,
-  ),
-  CategoryItem(
-    id: 'communication',
-    name: '통신',
-    iconCode: 'e0cd',
-    isActive: true,
-  ),
-  CategoryItem(
-    id: 'insurance',
-    name: '보험',
-    iconCode: 'e1af',
-    isActive: false,
-  ),
-  CategoryItem(id: 'education', name: '교육', iconCode: 'e80c', isActive: true),
+  CategoryItem(id: 'cat_cafe_food', name: '카페/푸드', iconCode: 'e59e', isActive: true),
+  CategoryItem(id: 'cat_convenience', name: '편의점/마트', iconCode: 'e59c', isActive: true),
+  CategoryItem(id: 'cat_online', name: '쇼핑/온라인', iconCode: 'e8cc', isActive: true),
+  CategoryItem(id: 'cat_subscription', name: '구독/배달', iconCode: 'ef6a', isActive: true),
+  CategoryItem(id: 'cat_transport', name: '교통/주유', iconCode: 'e549', isActive: true),
+  CategoryItem(id: 'cat_life', name: '생활/기타', iconCode: 'e88a', isActive: true),
 ];
 
 class CategoriesScreen extends StatefulWidget {

@@ -1,0 +1,12 @@
+{
+  "name": "dealping-seed",
+  "version": "1.0.0",
+  "description": "Firestore seed script for DealPing",
+  "main": "seed.js",
+  "scripts": {
+    "seed": "node seed.js"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.0.0"
+  }
+}

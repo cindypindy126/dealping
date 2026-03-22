@@ -1,7 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../data/models/models.dart';
-import '../../data/services/mock_data_service.dart';
+import '../../data/repositories/benefit_provider_repository.dart';
+import '../../data/repositories/category_repository.dart';
+import '../../data/repositories/merchant_repository.dart';
+import '../../data/services/benefit_matching_service.dart';
 
 // ─── My Providers state (locally persisted) ───────────────────────────────────
 
@@ -35,6 +38,28 @@ class MyProvidersNotifier extends StateNotifier<List<String>> {
 final myProvidersProvider =
     StateNotifierProvider<MyProvidersNotifier, List<String>>((ref) {
   return MyProvidersNotifier();
+});
+
+// ─── All providers from Firestore ─────────────────────────────────────────────
+
+final allProvidersProvider = FutureProvider<List<BenefitProvider>>((ref) async {
+  final repo = ref.read(benefitProviderRepositoryProvider);
+  return repo.getAll();
+});
+
+// ─── Categories from Firestore ────────────────────────────────────────────────
+
+final categoriesProvider = FutureProvider<List<Category>>((ref) async {
+  final repo = ref.read(categoryRepositoryProvider);
+  return repo.getAll();
+});
+
+// ─── Merchants by category from Firestore ─────────────────────────────────────
+
+final merchantsByCategoryProvider =
+    FutureProvider.family<List<Merchant>, String>((ref, categoryId) async {
+  final repo = ref.read(merchantRepositoryProvider);
+  return repo.getByCategory(categoryId);
 });
 
 // ─── Search count (자주 검색한 순) ────────────────────────────────────────────
@@ -72,13 +97,14 @@ final searchCountProvider =
 final selectedCategoryProvider = StateProvider<String?>((ref) => null);
 final selectedMerchantProvider = StateProvider<Merchant?>((ref) => null);
 
-// ─── Matched benefits ─────────────────────────────────────────────────────────
+// ─── Matched benefits (Firestore) ─────────────────────────────────────────────
 
-final matchedBenefitsProvider = Provider.family<List<MatchedBenefit>,
-    ({String categoryId, String? merchantId})>((ref, params) {
-  final registeredIds = ref.watch(myProvidersProvider);
-  return MockDataService.matchBenefits(
-    registeredProviderIds: registeredIds,
+final matchedBenefitsProvider = FutureProvider.family<List<MatchedBenefit>,
+    ({String categoryId, String? merchantId})>((ref, params) async {
+  final providerIds = ref.watch(myProvidersProvider);
+  final service = ref.read(benefitMatchingServiceProvider);
+  return service.matchBenefits(
+    providerIds: providerIds,
     categoryId: params.categoryId,
     merchantId: params.merchantId,
   );

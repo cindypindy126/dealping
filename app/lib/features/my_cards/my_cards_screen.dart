@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../data/models/models.dart';
-import '../../data/services/mock_data_service.dart';
 import '../../features/providers/app_providers.dart';
 import '../../shared/widgets/empty_state.dart';
 import '../../shared/widgets/provider_type_badge.dart';
@@ -80,10 +79,12 @@ class _MyCardsScreenState extends ConsumerState<MyCardsScreen> {
   @override
   Widget build(BuildContext context) {
     final myProviderIds = ref.watch(myProvidersProvider);
-    final myProviders = myProviderIds
-        .map(MockDataService.getProvider)
-        .whereType<BenefitProvider>()
-        .toList();
+    final allAsync = ref.watch(allProvidersProvider);
+    final myProviders = allAsync.when(
+      data: (all) => all.where((p) => myProviderIds.contains(p.id)).toList(),
+      loading: () => <BenefitProvider>[],
+      error: (_, __) => <BenefitProvider>[],
+    );
 
     final credit = myProviders.where((p) => p.cardType == 'credit').toList();
     final debit = myProviders.where((p) => p.cardType == 'debit').toList();
@@ -362,8 +363,7 @@ class _AddProviderSheet extends ConsumerStatefulWidget {
 class _AddProviderSheetState extends ConsumerState<_AddProviderSheet> {
   String _query = '';
 
-  List<BenefitProvider> get _filtered {
-    final all = MockDataService.providers;
+  List<BenefitProvider> _filtered(List<BenefitProvider> all) {
     if (_query.isEmpty) return all;
     final lower = _query.toLowerCase();
     return all
@@ -375,7 +375,12 @@ class _AddProviderSheetState extends ConsumerState<_AddProviderSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final filtered = _filtered;
+    final allAsync = ref.watch(allProvidersProvider);
+    final filtered = allAsync.when(
+      data: (all) => _filtered(all),
+      loading: () => <BenefitProvider>[],
+      error: (_, __) => <BenefitProvider>[],
+    );
 
     return DraggableScrollableSheet(
       expand: false,

@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../data/models/models.dart';
-import '../../data/services/mock_data_service.dart';
 import '../../features/providers/app_providers.dart';
 import '../../shared/widgets/benefit_card.dart';
 import '../../shared/widgets/empty_state.dart';
@@ -49,8 +48,7 @@ class _CategoryDetailScreenState extends ConsumerState<CategoryDetailScreen> {
     super.dispose();
   }
 
-  List<Merchant> get _sortedMerchants {
-    final all = MockDataService.getMerchantsForCategory(widget.categoryId);
+  List<Merchant> _sortedMerchants(List<Merchant> all) {
     final counts = ref.read(searchCountProvider);
 
     List<Merchant> filtered;
@@ -66,8 +64,7 @@ class _CategoryDetailScreenState extends ConsumerState<CategoryDetailScreen> {
     }
 
     filtered.sort((a, b) {
-      final countDiff =
-          (counts[b.id] ?? 0).compareTo(counts[a.id] ?? 0);
+      final countDiff = (counts[b.id] ?? 0).compareTo(counts[a.id] ?? 0);
       if (countDiff != 0) return countDiff;
       return a.name.compareTo(b.name);
     });
@@ -86,9 +83,24 @@ class _CategoryDetailScreenState extends ConsumerState<CategoryDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final category = MockDataService.getCategory(widget.categoryId);
+    final categoriesAsync = ref.watch(categoriesProvider);
+    final categoryName = categoriesAsync.when(
+      data: (cats) => cats.firstWhere((c) => c.id == widget.categoryId,
+          orElse: () => cats.first).name,
+      loading: () => '카테고리',
+      error: (_, __) => '카테고리',
+    );
+
+    final merchantsAsync = ref.watch(merchantsByCategoryProvider(widget.categoryId));
+    final merchants = merchantsAsync.when(
+      data: (m) => m,
+      loading: () => <Merchant>[],
+      error: (_, __) => <Merchant>[],
+    );
+    final sortedMerchants = _sortedMerchants(merchants);
+
     final myProviderIds = ref.watch(myProvidersProvider);
-    final benefits = ref.watch(matchedBenefitsProvider((
+    final benefitsAsync = ref.watch(matchedBenefitsProvider((
       categoryId: widget.categoryId,
       merchantId: _selectedMerchant?.id,
     )));
@@ -102,8 +114,7 @@ class _CategoryDetailScreenState extends ConsumerState<CategoryDetailScreen> {
           icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
           onPressed: () => context.pop(),
         ),
-        title: Text(category?.name ?? '카테고리',
-            style: AppTextStyles.titleMedium),
+        title: Text(categoryName, style: AppTextStyles.titleMedium),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -157,7 +168,7 @@ class _CategoryDetailScreenState extends ConsumerState<CategoryDetailScreen> {
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(color: AppColors.border),
                 ),
-                child: _sortedMerchants.isEmpty
+                child: sortedMerchants.isEmpty
                     ? Padding(
                         padding: const EdgeInsets.all(16),
                         child: Text('검색 결과 없음',
@@ -167,11 +178,11 @@ class _CategoryDetailScreenState extends ConsumerState<CategoryDetailScreen> {
                     : ListView.separated(
                         shrinkWrap: true,
                         padding: EdgeInsets.zero,
-                        itemCount: _sortedMerchants.length,
+                        itemCount: sortedMerchants.length,
                         separatorBuilder: (_, __) =>
                             const Divider(height: 1, indent: 16, endIndent: 16),
                         itemBuilder: (_, i) {
-                          final m = _sortedMerchants[i];
+                          final m = sortedMerchants[i];
                           final selected = _selectedMerchant?.id == m.id;
                           return ListTile(
                             dense: true,
@@ -235,24 +246,35 @@ class _CategoryDetailScreenState extends ConsumerState<CategoryDetailScreen> {
                 actionLabel: '카드 추가하기',
                 onAction: () => context.go('/my-cards'),
               )
-            else if (benefits.isEmpty)
-              const EmptyState(
-                icon: Icons.search_off,
-                title: '등록된 카드 중 해당 혜택이 없습니다',
-                subtitle: '다른 카테고리나 카드를 확인해보세요',
-              )
             else
-              ...benefits.map((mb) => Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: BenefitCard(
-                      matchedBenefit: mb,
-                      onTap: () =>
-                          context.push('/provider/${mb.provider.id}'),
-                    ),
-                  )),
+              benefitsAsync.when(
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (_, __) => const EmptyState(
+                  icon: Icons.error_outline,
+                  title: '혜택을 불러오지 못했습니다',
+                  subtitle: '잠시 후 다시 시도해주세요',
+                ),
+                data: (benefits) => benefits.isEmpty
+                    ? const EmptyState(
+                        icon: Icons.search_off,
+                        title: '등록된 카드 중 해당 혜택이 없습니다',
+                        subtitle: '다른 카테고리나 카드를 확인해보세요',
+                      )
+                    : Column(
+                        children: benefits
+                            .map((mb) => Padding(
+                                  padding: const EdgeInsets.only(bottom: 12),
+                                  child: BenefitCard(
+                                    matchedBenefit: mb,
+                                    onTap: () => context
+                                        .push('/provider/${mb.provider.id}'),
+                                  ),
+                                ))
+                            .toList(),
+                      ),
+              ),
 
             const SizedBox(height: 16),
-            // Disclaimer
             Text(
               '* 전월실적 및 합산 할인액은 카드 개별 정보를 참고하세요',
               style: AppTextStyles.bodySmall

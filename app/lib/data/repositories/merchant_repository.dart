@@ -15,9 +15,10 @@ class MerchantRepository {
           .collection(AppConstants.colMerchants)
           .where('category_id', isEqualTo: categoryId)
           .where('is_active', isEqualTo: true)
-          .orderBy('sort_order')
           .get();
-      return snap.docs.map(Merchant.fromFirestore).toList();
+      final merchants = snap.docs.map(Merchant.fromFirestore).toList();
+      merchants.sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
+      return merchants;
     } on FirebaseException catch (e) {
       throw RepositoryException('Failed to load merchants for category $categoryId: ${e.message}', e);
     }
